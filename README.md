@@ -1,165 +1,187 @@
-# Triply — Travel Planner
+# ✈️ Triply — Travel Planner
 
-Triply is a travel planning web application built with React, Vite, Node.js, Express, and PostgreSQL. It helps users organize trips and manage their itineraries in one place.
+**Pack the bag. Plan the days.**
 
-## Features
+Triply is a travel planning web application that helps you organize your trips, manage travel dates, and plan activities for your next adventure.
 
-- Create and manage trips
-- Edit trip details
-- Delete trips
-- Add itinerary activities with dates, times, locations, and notes
-- View saved trips and itinerary activities
-- Responsive user interface
-- PostgreSQL database integration
+🌐 **Live Demo:** [triply-travel-planner.vercel.app](https://triply-travel-planner.vercel.app/)
 
-## Tech Stack
+---
 
-**Frontend**
-- React
-- Vite
-- CSS
+## ✨ Features
 
-**Backend**
-- Node.js
-- Express.js
-- PostgreSQL
+- 🧳 **Create Trips** — Add trips with a title, destination, dates, and description.
+- 🌍 **Manage Destinations** — Keep your travel plans organized by destination.
+- 📅 **Plan Activities** — Add activities to your trips with dates, times, and locations.
+- 🗂️ **View Your Trips** — Browse your saved trips in one place.
+- ☁️ **Cloud Database** — Store trip information in PostgreSQL using Neon.
+- 🚀 **Live Deployment** — Deployed on Vercel.
 
-## Project Structure
+## 🛠️ Tech Stack
 
-```text
-trip-planner/
-├── public/
-├── server/
-│   └── server.js
-├── src/
-│   ├── App.jsx
-│   └── index.css
-├── index.html
-├── package.json
-├── package-lock.json
-├── .gitignore
-└── README.md
-```
+| Technology | Purpose |
+|---|---|
+| React | Frontend UI |
+| Vite | Frontend development and build tooling |
+| Node.js | Backend runtime |
+| Express.js | REST API |
+| PostgreSQL | Relational database |
+| Neon | Hosted PostgreSQL database |
+| Vercel | Deployment and hosting |
+| Git & GitHub | Version control and source code hosting |
 
-## Prerequisites
+## 🔗 Live Application
 
-Install the following before running the project:
+👉 [Open Triply](https://triply-travel-planner.vercel.app/)
 
-- Node.js and npm
-- PostgreSQL
-- Git (optional, for version control)
+## 📸 How It Works
 
-## Getting Started
+1. Open the live application.
+2. Create a new trip.
+3. Enter the trip title, destination, start date, and end date.
+4. Save your trip.
+5. Open the trip and add activities to plan your days.
+
+## 🚀 Run Locally
+
+### Prerequisites
+
+Make sure you have installed:
+
+- [Node.js](https://nodejs.org/)
+- [Git](https://git-scm.com/)
+- A PostgreSQL database, such as [Neon](https://neon.tech/)
 
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
-cd trip-planner
+git clone https://github.com/duashah110/triply-travel-planner.git
+cd triply-travel-planner
 ```
 
-If you already have the project on your computer, open its folder in VS Code and skip this step.
-
 ### 2. Install frontend dependencies
-
-Run these commands from the project root:
 
 ```bash
 npm install
 ```
 
-### 3. Configure the backend
+### 3. Install backend dependencies
 
-Open a terminal in VS Code and navigate to the server directory:
-
-```powershell
+```bash
 cd server
-```
-
-Install backend dependencies:
-
-```powershell
 npm install
 ```
 
-Configure your PostgreSQL connection settings as required by your backend code. Keep passwords and other secrets in environment variables or a local `.env` file. Never commit credentials to GitHub.
+### 4. Configure environment variables
 
-Make sure PostgreSQL is running and the required database and tables have been created.
+Create a `.env` file inside the `server/` directory:
 
-### 4. Start the backend
+```env
+DATABASE_URL=your_neon_postgresql_connection_string
+PORT=5000
+```
 
-From the `server` directory, run:
+Replace the example database value with your own Neon connection string. **Never commit your real database credentials to GitHub.**
 
-```powershell
+Make sure your Neon database contains the required tables: `users`, `trips`, and `activities`.
+
+### 5. Start the backend
+
+From the `server/` directory, run:
+
+```bash
 node server.js
 ```
 
-The backend should start at:
+### 6. Start the frontend
 
-```text
-http://localhost:5000
-```
+Open a **second terminal** in the project root directory and run:
 
-Keep this terminal running.
-
-### 5. Start the frontend
-
-Open a **second terminal** in VS Code and navigate to the project root:
-
-```powershell
-cd C:\Users\HP\Desktop\trip-planner
+```bash
 npm run dev
 ```
 
-Open the local URL printed by Vite, usually:
+Open the local URL displayed by Vite in your terminal, usually:
 
-```text
-http://localhost:5173
-```
+`http://localhost:5173`
 
-Keep both frontend and backend terminals running while using the application.
+> **Note:** Keep the backend and frontend terminals running while developing locally. If your project uses a different local API configuration, configure the frontend to point to your local backend.
 
-## Available Frontend Commands
+## 🔌 API Endpoints
 
-Run these commands from the project root.
-
-| Command | Description |
-|---|---|
-| `npm install` | Install frontend dependencies |
-| `npm run dev` | Start the development server |
-| `npm run build` | Build the frontend for production |
-| `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run ESLint checks |
-
-## Backend API
-
-The backend runs on `http://localhost:5000`.
+The application uses REST API endpoints to manage travel data.
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| GET | `/` | Check whether the API is running |
 | GET | `/api/trips` | Retrieve trips |
 | POST | `/api/trips` | Create a trip |
-| GET | `/api/trips/:id` | Retrieve a trip by ID |
-| PUT | `/api/trips/:id` | Update a trip |
-| GET | `/api/trips/:tripId/activities` | Retrieve a trip's activities |
-| POST | `/api/trips/:tripId/activities` | Add an itinerary activity |
+| GET | `/api/trips/:id` | Retrieve a trip by ID, if implemented |
+| PUT | `/api/trips/:id` | Update a trip, if implemented |
+| DELETE | `/api/trips/:id` | Delete a trip, if implemented |
+| GET/POST | `/api/activities` | Retrieve or create activities, depending on implementation |
 
-Additional endpoints may be available depending on the backend implementation.
+> Endpoints marked “if implemented” should be checked against the current backend before use.
 
-## Database
+## 🗄️ Database
 
-Triply uses PostgreSQL. The database must be configured locally or through your deployment environment.
+Triply uses PostgreSQL hosted on Neon.
 
-Keep database credentials private. Do not upload `.env` files, passwords, or other secrets to a public repository.
+The database stores information for:
 
-## Development Notes
+- **Users** — User details.
+- **Trips** — Trip titles, destinations, dates, and descriptions.
+- **Activities** — Activities associated with trips, including dates, times, and locations.
 
-- Run the frontend and backend in separate terminals.
-- Ensure PostgreSQL is running before testing database-backed features.
-- Configure the frontend API URL appropriately when deploying.
-- Set production environment variables on your hosting provider.
+Trips and activities use relational database constraints to maintain data integrity.
 
-## License
+## 🌐 Deployment
 
-No license has been specified yet.
+- **Frontend and application:** [Vercel](https://vercel.com/)
+- **Database:** [Neon](https://neon.tech/)
+- **Source code:** [GitHub Repository](https://github.com/duashah110/triply-travel-planner)
+
+### Deploy your own copy
+
+1. Push the project to GitHub.
+2. Import the repository into Vercel.
+3. Configure the required environment variables in Vercel.
+4. Confirm that your backend API routes are deployed and accessible.
+5. Deploy the project and test trip and activity creation.
+
+## 🔐 Environment Variables
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string from Neon |
+| `PORT` | Backend port for local development |
+
+Keep all secrets in environment variables. Do not publish passwords, API keys, or database connection strings in source code or README files.
+
+## 🗺️ Roadmap
+
+- [ ] User registration and authentication
+- [ ] Edit and delete trips
+- [ ] Improved activity management
+- [ ] Enhanced mobile experience
+- [ ] More travel-planning features
+
+## 🤝 Contributing
+
+Contributions, suggestions, and feedback are welcome!
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Commit your changes.
+4. Open a pull request.
+
+## 👩‍💻 Author
+
+**Dua Shah**
+
+- GitHub: [@duashah110](https://github.com/duashah110)
+
+---
+
+> “Slow down. The view isn't going anywhere, but you are.”
+
+**Made with ❤️ for better travel planning.**
