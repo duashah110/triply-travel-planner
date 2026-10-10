@@ -303,12 +303,18 @@ app.delete("/api/activities/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete activity" });
   }
 });
-app.listen(PORT, () => {
-  console.log(`Triply API running on http://localhost:${PORT}`);
-}
 
-);
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`Triply API running on http://localhost:${PORT}`);
+  });
+}
 
 pool.query("SELECT NOW()")
   .then(() => console.log("Neon database connected successfully"))
-  .catch((error) => console.error("Database connection failed:", error.message));
+  .catch((error) =>
+    console.error("Database connection failed:", error.message)
+  );
+
+module.exports = app;
+
