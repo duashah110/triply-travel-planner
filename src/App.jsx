@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./index.css";
 
 const API = import.meta.env.PROD ? "" : "http://localhost:5000";
-const USER_ID = 1;
 
 const blankTrip = {
   title: "",
@@ -33,6 +32,12 @@ const QUOTES = [
   "Your passport has room for more stories than stamps.",
   "Slow down. The view isn't going anywhere, but you are.",
   "Every strange town is a story waiting for you to walk in.",
+];
+
+const FILTERS = [
+  { id: "all", label: "All" },
+  { id: "upcoming", label: "Upcoming" },
+  { id: "past", label: "Past" },
 ];
 
 /* ---------- helpers ---------- */
@@ -97,8 +102,48 @@ function dayNumber(dateStr, trip) {
   return n >= 1 ? `Day ${n}` : null;
 }
 
+function startOfToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+}
+
+// "upcoming" | "ongoing" | "past" | "undated"
+function tripStatus(trip) {
+  if (!trip.start_date || !trip.end_date) return "undated";
+  const today = startOfToday();
+  if (toDate(trip.end_date) < today) return "past";
+  if (toDate(trip.start_date) > today) return "upcoming";
+  return "ongoing";
+}
+
+function daysUntil(dateStr) {
+  return Math.round((toDate(dateStr) - startOfToday()) / 86400000);
+}
+
+function statusLabel(trip) {
+  const status = tripStatus(trip);
+  if (status === "ongoing") return "Happening now";
+  if (status === "past") return "Completed";
+  if (status === "upcoming") {
+    const n = daysUntil(trip.start_date);
+    if (n === 1) return "Tomorrow";
+    return `In ${n} days`;
+  }
+  return "Dates tbd";
+}
+
+function passwordScore(password) {
+  let score = 0;
+  if (password.length >= 12) score += 1;
+  if (password.length >= 16) score += 1;
+  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
+  if (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)) score += 1;
+  return score;
+}
+
 async function request(path, options = {}) {
   const response = await fetch(`${API}${path}`, {
+    credentials: "include",
     ...options,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -133,6 +178,15 @@ const ICONS = {
   calendar: "M5 5h14v15H5zM5 10h14M9 3v4M15 3v4",
   plane: "M21 3L3 10.5l7 2.5 2.5 7L21 3zM10 13l11-10",
   shuffle: "M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5",
+  mail: "M4 5h16v14H4zM4 7l8 6 8-6",
+  lock: "M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3",
+  user: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-6 8-6s8 2 8 6",
+  eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  eyeOff:
+    "M3 3l18 18M10.6 6.2A9.6 9.6 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.8M6.6 6.7C3.7 8.4 2 12 2 12s4 7 10 7c1.6 0 3-.4 4.3-1M9.9 9.9a3 3 0 0 0 4.2 4.2",
+  logout: "M9 4H5v16h4M16 8l4 4-4 4M20 12H9",
+  check: "M5 12.5l4.5 4.5L19 7",
+  compass: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM15.5 8.5l-2 5-5 2 2-5 5-2z",
 };
 
 function Icon({ name, size = 16 }) {
@@ -230,10 +284,214 @@ function Postmark() {
   );
 }
 
+/* ---------- auth screen ---------- */
+
+function AuthField({ icon, label, children }) {
+  return (
+    <label className="field">
+      <span className="field-label">{label}</span>
+      <span className="field-box">
+        <Icon name={icon} size={18} />
+        {children}
+      </span>
+    </label>
+  );
+}
+
+function AuthScreen({ mode, setMode, form, setForm, busy, error, onSubmit }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [quote] = useState(() => Math.floor(Math.random() * QUOTES.length));
+  const signup = mode === "signup";
+  const score = passwordScore(form.password);
+  const strengthText = ["Too short", "Okay", "Good", "Strong", "Excellent"][
+    form.password.length < 12 ? 0 : Math.max(1, score)
+  ];
+
+  return (
+    <div className="auth">
+      <div className="stripe-top" aria-hidden="true" />
+
+      <section className="auth-art" aria-hidden="false">
+        <a className="brand brand-light" href="#top" aria-label="Triply home">
+          <span className="brand-plane">
+            <Icon name="plane" size={18} />
+          </span>
+          triply
+        </a>
+
+        <div className="auth-art-body">
+          <h1 className="auth-headline">
+            <span className="line"><span>Your next trip</span></span>
+            <span className="line"><span>starts here.</span></span>
+          </h1>
+          <p className="auth-lede">
+            Keep every destination, date and detour in one place, and turn
+            “someday” into a day-by-day plan.
+          </p>
+
+          <div className="auth-postcard-wrap">
+            <div className="auth-postcard">
+              <blockquote>“{QUOTES[quote]}”</blockquote>
+              <span className="pc-sign">your future self</span>
+              <div className="auth-postcard-stamp">
+                <Stamp />
+              </div>
+              <Postmark />
+            </div>
+          </div>
+
+          <ul className="auth-points">
+            <li><Icon name="check" size={15} /> Plan trips with dates and destinations</li>
+            <li><Icon name="check" size={15} /> Build a day-by-day itinerary</li>
+            <li><Icon name="check" size={15} /> Your trips are saved to your account</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="auth-panel">
+        <div className="auth-card">
+          <div className="auth-tabs" role="tablist" aria-label="Account">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!signup}
+              className={!signup ? "is-on" : ""}
+              onClick={() => setMode("login")}
+            >
+              Log in
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={signup}
+              className={signup ? "is-on" : ""}
+              onClick={() => setMode("signup")}
+            >
+              Sign up
+            </button>
+          </div>
+
+          <h2 className="auth-title">
+            {signup ? "Create your account" : "Welcome back"}
+          </h2>
+          <p className="auth-sub">
+            {signup
+              ? "It takes a minute. Then start planning your first trip."
+              : "Log in to see your trips and pick up where you left off."}
+          </p>
+
+          <form onSubmit={onSubmit} className="auth-form" noValidate={false}>
+            {signup && (
+              <AuthField icon="user" label="Your name">
+                <input
+                  required
+                  autoComplete="name"
+                  placeholder="Alex Traveler"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </AuthField>
+            )}
+
+            <AuthField icon="mail" label="Email">
+              <input
+                required
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </AuthField>
+
+            <AuthField icon="lock" label="Password">
+              <input
+                required
+                type={showPassword ? "text" : "password"}
+                minLength={signup ? 12 : undefined}
+                autoComplete={signup ? "new-password" : "current-password"}
+                placeholder={signup ? "At least 12 characters" : "Your password"}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+              <button
+                type="button"
+                className="field-toggle"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                <Icon name={showPassword ? "eyeOff" : "eye"} size={18} />
+              </button>
+            </AuthField>
+
+            {signup && (
+              <div className="strength" aria-live="polite">
+                <div className="strength-bars">
+                  {[1, 2, 3, 4].map((n) => (
+                    <i
+                      key={n}
+                      className={
+                        form.password.length >= 12 && score >= n
+                          ? `on s${score}`
+                          : form.password.length > 0 && n === 1 && form.password.length < 12
+                            ? "on s0"
+                            : ""
+                      }
+                    />
+                  ))}
+                </div>
+                <span>
+                  {form.password ? strengthText : "Use 12 or more characters"}
+                </span>
+              </div>
+            )}
+
+            {error && (
+              <div className="auth-error" role="alert">
+                <Icon name="close" size={14} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <Button type="submit" disabled={busy} className="auth-submit">
+              {busy
+                ? "Please wait…"
+                : signup
+                  ? "Create account"
+                  : "Log in"}
+            </Button>
+          </form>
+
+          <p className="auth-switch">
+            {signup ? "Already have an account?" : "New to Triply?"}
+            <button
+              type="button"
+              onClick={() => setMode(signup ? "login" : "signup")}
+            >
+              {signup ? "Log in" : "Create an account"}
+            </button>
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 /* ---------- app ---------- */
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
   const [trips, setTrips] = useState([]);
+  const [authForm, setAuthForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState("");
+
   const [activities, setActivities] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [tripForm, setTripForm] = useState(blankTrip);
@@ -242,12 +500,63 @@ function App() {
   const [showTripForm, setShowTripForm] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [quote, setQuote] = useState(() => Math.floor(Math.random() * QUOTES.length));
+
+  useEffect(() => {
+    request("/api/auth/me")
+      .then((data) => setUser(data.user))
+      .catch(() => setUser(null))
+      .finally(() => setAuthChecked(true));
+  }, []);
+
+  async function handleAuthSubmit(event) {
+    event.preventDefault();
+    setAuthBusy(true);
+    setAuthError("");
+
+    try {
+      const result = await request(
+        authMode === "signup" ? "/api/auth/signup" : "/api/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify(authForm),
+        }
+      );
+
+      setUser(result.user);
+      setAuthForm({ name: "", email: "", password: "" });
+      setLoading(true);
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  function switchAuthMode(mode) {
+    setAuthMode(mode);
+    setAuthError("");
+  }
+
+  async function handleLogout() {
+    try {
+      await request("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+
+    setUser(null);
+    setTrips([]);
+    setActivities([]);
+    setSelectedId(null);
+    setLoading(false);
+  }
 
   const selectedTrip = trips.find(
     (trip) => String(trip.id) === String(selectedId)
@@ -294,16 +603,25 @@ function App() {
   }, []);
 
   useEffect(() => {
-    loadTrips();
-  }, [loadTrips]);
+    if (!authChecked) return;
+
+    if (user) {
+      setLoading(true);
+      loadTrips();
+    } else {
+      setTrips([]);
+      setActivities([]);
+      setLoading(false);
+    }
+  }, [authChecked, user, loadTrips]);
 
   useEffect(() => {
-    if (selectedId != null) {
+    if (user && selectedId != null) {
       loadActivities(selectedId);
     } else {
       setActivities([]);
     }
-  }, [selectedId, loadActivities]);
+  }, [user, selectedId, loadActivities]);
 
   // Auto-dismiss the toast.
   useEffect(() => {
@@ -334,18 +652,32 @@ function App() {
 
   const filteredTrips = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return trips;
-    return trips.filter((trip) =>
-      [trip.title, trip.destination, trip.description]
+    return trips.filter((trip) => {
+      const status = tripStatus(trip);
+      if (filter === "upcoming" && !(status === "upcoming" || status === "ongoing" || status === "undated")) {
+        return false;
+      }
+      if (filter === "past" && status !== "past") return false;
+      if (!term) return true;
+      return [trip.title, trip.destination, trip.description]
         .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(term))
-    );
-  }, [trips, search]);
+        .some((value) => value.toLowerCase().includes(term));
+    });
+  }, [trips, search, filter]);
 
   const totalDays = trips.reduce(
     (sum, trip) => sum + (tripLength(trip) || 0),
     0
   );
+
+  // The trip happening now, or the soonest one still to come.
+  const nextTrip = useMemo(() => {
+    const live = trips.find((trip) => tripStatus(trip) === "ongoing");
+    if (live) return live;
+    return trips
+      .filter((trip) => tripStatus(trip) === "upcoming")
+      .sort((a, b) => dateInput(a.start_date).localeCompare(dateInput(b.start_date)))[0];
+  }, [trips]);
 
   const groupedActivities = useMemo(() => {
     const key = (a) => `${dateInput(a.activity_date)} ${a.activity_time || "99:99"}`;
@@ -409,9 +741,7 @@ function App() {
         editing ? `/api/trips/${editingId}` : "/api/trips",
         {
           method: editing ? "PUT" : "POST",
-          body: JSON.stringify(
-            editing ? tripForm : { ...tripForm, user_id: USER_ID }
-          ),
+          body: JSON.stringify(tripForm),
         }
       );
 
@@ -495,6 +825,33 @@ function App() {
   }
 
   const nextStop = selectedTrip?.destination || trips[0]?.destination || "somewhere good";
+  const firstName = (user?.name || "").trim().split(/\s+/)[0] || "traveler";
+  const selectedStatus = selectedTrip ? tripStatus(selectedTrip) : null;
+
+  if (!authChecked) {
+    return (
+      <main className="splash">
+        <span className="splash-plane">
+          <Icon name="plane" size={30} />
+        </span>
+        <p>Packing your bags…</p>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AuthScreen
+        mode={authMode}
+        setMode={switchAuthMode}
+        form={authForm}
+        setForm={setAuthForm}
+        busy={authBusy}
+        error={authError}
+        onSubmit={handleAuthSubmit}
+      />
+    );
+  }
 
   return (
     <>
@@ -507,27 +864,56 @@ function App() {
             </span>
             triply
           </a>
-          <Button onClick={openCreateTrip}>
-            <Icon name="plus" /> New trip
-          </Button>
+
+          <div className="top-actions">
+            <div className="user-chip" title={user.email || ""}>
+              <span className="avatar">{firstName.charAt(0).toUpperCase()}</span>
+              <span className="user-name">{user.name || "Traveler"}</span>
+            </div>
+            <Button variant="soft" onClick={handleLogout} aria-label="Log out">
+              <Icon name="logout" />
+              <span className="hide-sm">Log out</span>
+            </Button>
+          </div>
         </header>
 
         <section className="hero" id="top">
           <div className="hero-copy">
+            <p className="eyebrow">
+              <Icon name="compass" size={15} />
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+              <span aria-hidden="true">·</span> Trip board
+            </p>
             <h1>
               <span className="line"><span>Pack the bag.</span></span>
               <span className="line"><span>Plan the days.</span></span>
             </h1>
             <p className="hero-line">
-              <mark>{trips.length}</mark> {trips.length === 1 ? "trip" : "trips"} on the board,{" "}
-              <mark>{totalDays}</mark> {totalDays === 1 ? "day" : "days"} to look forward to
-              {selectedTrip && (
+              {nextTrip ? (
                 <>
-                  {" "}and <mark>{activities.length}</mark>{" "}
-                  {activities.length === 1 ? "thing" : "things"} planned in {selectedTrip.destination}
+                  {tripStatus(nextTrip) === "ongoing" ? (
+                    <>You're in <mark>{nextTrip.destination}</mark> right now. Enjoy every minute.</>
+                  ) : (
+                    <>
+                      <mark>{nextTrip.destination}</mark> is{" "}
+                      {daysUntil(nextTrip.start_date) === 1
+                        ? "tomorrow"
+                        : `${daysUntil(nextTrip.start_date)} days away`}
+                      . Time to finish the plan.
+                    </>
+                  )}
                 </>
+              ) : trips.length ? (
+                <>
+                  <mark>{trips.length}</mark> {trips.length === 1 ? "trip" : "trips"} on the board. Ready for the next one?
+                </>
+              ) : (
+                <>Your board is empty. Pick a place and start your first trip.</>
               )}
-              .
             </p>
             <Button onClick={openCreateTrip}>
               <Icon name="plus" /> Plan a trip
@@ -546,7 +932,7 @@ function App() {
                     <Stamp />
                   </div>
                   <Postmark />
-                  <div className="pc-line">To: you</div>
+                  <div className="pc-line">To: {user.name || "you"}</div>
                   <div className="pc-line">Next stop: {nextStop}</div>
                   <div className="pc-line" />
                 </div>
@@ -559,6 +945,34 @@ function App() {
               >
                 <Icon name="shuffle" /> Another postcard
               </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="stats" aria-label="Your travel summary">
+          <div className="stat stat-sun">
+            <span className="stat-icon"><Icon name="compass" size={22} /></span>
+            <div>
+              <strong>{trips.length}</strong>
+              <span>{trips.length === 1 ? "trip planned" : "trips planned"}</span>
+            </div>
+          </div>
+          <div className="stat stat-blush">
+            <span className="stat-icon"><Icon name="calendar" size={22} /></span>
+            <div>
+              <strong>{totalDays}</strong>
+              <span>{totalDays === 1 ? "day to look forward to" : "days to look forward to"}</span>
+            </div>
+          </div>
+          <div className="stat stat-sky">
+            <span className="stat-icon"><Icon name="pin" size={22} /></span>
+            <div>
+              <strong>{selectedTrip ? activities.length : 0}</strong>
+              <span>
+                {selectedTrip
+                  ? `${activities.length === 1 ? "activity" : "activities"} in ${selectedTrip.destination}`
+                  : "activities planned"}
+              </span>
             </div>
           </div>
         </section>
@@ -577,19 +991,39 @@ function App() {
           <section aria-label="Your trips">
             <div className="panel-title">
               <h2>Your trips</h2>
-              {!loading && <span className="count">{filteredTrips.length}</span>}
+              {!loading && trips.length > 0 && (
+                <span className="count">{filteredTrips.length}</span>
+              )}
             </div>
 
-            <label className="search">
-              <Icon name="search" size={18} />
-              <input
-                type="search"
-                placeholder="Search by name or place"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                aria-label="Search trips"
-              />
-            </label>
+            {trips.length > 0 && (
+              <>
+                <label className="search">
+                  <Icon name="search" size={18} />
+                  <input
+                    type="search"
+                    placeholder="Search by name or place"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    aria-label="Search trips"
+                  />
+                </label>
+
+                <div className="filters" role="group" aria-label="Filter trips">
+                  {FILTERS.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={filter === item.id ? "is-on" : ""}
+                      aria-pressed={filter === item.id}
+                      onClick={() => setFilter(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
 
             {loading ? (
               <div className="trip-list">
@@ -598,12 +1032,22 @@ function App() {
                 ))}
               </div>
             ) : filteredTrips.length === 0 ? (
-              search ? (
+              search || filter !== "all" ? (
                 <div className="empty">
                   <h3>No matches</h3>
-                  <p>Nothing matches “{search}”. Try a different name or place.</p>
-                  <Button variant="soft" onClick={() => setSearch("")}>
-                    Clear search
+                  <p>
+                    {search
+                      ? `Nothing matches “${search}”. Try a different name or place.`
+                      : `No ${filter} trips right now.`}
+                  </p>
+                  <Button
+                    variant="soft"
+                    onClick={() => {
+                      setSearch("");
+                      setFilter("all");
+                    }}
+                  >
+                    Clear filters
                   </Button>
                 </div>
               ) : (
@@ -624,10 +1068,11 @@ function App() {
                   const isActive = String(selectedId) === String(trip.id);
                   const days = tripLength(trip);
                   const tone = getTone(trips.indexOf(trip));
+                  const status = tripStatus(trip);
 
                   return (
                     <div
-                      className={`ticket tone-${tone} ${isActive ? "is-active" : ""}`}
+                      className={`ticket tone-${tone} ${isActive ? "is-active" : ""} ${status === "past" ? "is-past" : ""}`}
                       key={trip.id}
                       role="button"
                       tabIndex={0}
@@ -648,6 +1093,9 @@ function App() {
                           <p>
                             <Icon name="pin" size={13} /> {trip.destination}
                           </p>
+                          <span className={`status status-${status}`}>
+                            {statusLabel(trip)}
+                          </span>
                         </div>
                       </div>
 
@@ -690,14 +1138,14 @@ function App() {
               <div className="empty-detail">
                 <div className="empty">
                   <span className="empty-icon">
-                    <Icon name="plane" size={26} />
+                    <Icon name="calendar" size={26} />
                   </span>
-                  <h3>Pick a trip</h3>
-                  <p>Select a ticket on the left to see its itinerary, or create a new one.</p>
-                  <Button variant="soft" onClick={openCreateTrip}>
-                    <Icon name="plus" /> Create a trip
-                  </Button>
-                  <p className="empty-quote">“{QUOTES[(quote + 5) % QUOTES.length]}”</p>
+                  <h3>{trips.length ? "Pick a trip" : "Your itinerary lives here"}</h3>
+                  <p>
+                    {trips.length
+                      ? "Select a ticket on the left to see its day-by-day plan."
+                      : "Once you create a trip, its day-by-day plan shows up here."}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -712,6 +1160,9 @@ function App() {
                       <span className="chip chip-yellow">
                         <Icon name="calendar" size={15} />
                         {prettyDate(selectedTrip.start_date)} to {prettyDate(selectedTrip.end_date)}
+                      </span>
+                      <span className={`chip chip-status status-${selectedStatus}`}>
+                        {statusLabel(selectedTrip)}
                       </span>
                     </div>
                   </div>
@@ -737,7 +1188,6 @@ function App() {
                       <Button variant="soft" onClick={openAddActivity}>
                         <Icon name="plus" /> Add the first activity
                       </Button>
-                      <p className="empty-quote">“{QUOTES[(quote + 3) % QUOTES.length]}”</p>
                     </div>
                   ) : (
                     groupedActivities.map(([day, items], dayIndex) => {
@@ -781,6 +1231,11 @@ function App() {
             )}
           </section>
         </div>
+
+        <footer className="foot">
+          <span>triply</span>
+          <span>Made for people who pack late and plan early.</span>
+        </footer>
       </div>
 
       {notice && (
