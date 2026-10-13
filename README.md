@@ -1,187 +1,196 @@
-# ✈️ Triply — Travel Planner
+# Triply — Travel Planner
 
-**Pack the bag. Plan the days.**
+Plan your next adventure with Triply! Save your trips, organize destinations and dates, and manage your travel plans in one place.
 
-Triply is a travel planning web application that helps you organize your trips, manage travel dates, and plan activities for your next adventure.
+**Live Website:** https://triply-travel-planner.vercel.app/
 
-🌐 **Live Demo:** [triply-travel-planner.vercel.app](https://triply-travel-planner.vercel.app/)
+## Tech Stack
 
----
+- Frontend: React + Vite
+- Backend: Node.js + Express
+- Database: Neon PostgreSQL
+- Authentication: Express sessions + Argon2 password hashing
+- Deployment: Vercel
+- Repository: https://github.com/duashah110/triply-travel-planner
 
-## ✨ Features
+## Prerequisites
 
-- 🧳 **Create Trips** — Add trips with a title, destination, dates, and description.
-- 🌍 **Manage Destinations** — Keep your travel plans organized by destination.
-- 📅 **Plan Activities** — Add activities to your trips with dates, times, and locations.
-- 🗂️ **View Your Trips** — Browse your saved trips in one place.
-- ☁️ **Cloud Database** — Store trip information in PostgreSQL using Neon.
-- 🚀 **Live Deployment** — Deployed on Vercel.
+Install these before running the project:
 
-## 🛠️ Tech Stack
+- [Node.js](https://nodejs.org/) (LTS recommended)
+- npm (included with Node.js)
+- Git
+- A configured Neon PostgreSQL database
 
-| Technology | Purpose |
-|---|---|
-| React | Frontend UI |
-| Vite | Frontend development and build tooling |
-| Node.js | Backend runtime |
-| Express.js | REST API |
-| PostgreSQL | Relational database |
-| Neon | Hosted PostgreSQL database |
-| Vercel | Deployment and hosting |
-| Git & GitHub | Version control and source code hosting |
+Check your installation:
 
-## 🔗 Live Application
+```powershell
+node --version
+npm --version
+git --version
+```
 
-👉 [Open Triply](https://triply-travel-planner.vercel.app/)
+## 1. Open the Project
 
-## 📸 How It Works
+Open PowerShell and run:
 
-1. Open the live application.
-2. Create a new trip.
-3. Enter the trip title, destination, start date, and end date.
-4. Save your trip.
-5. Open the trip and add activities to plan your days.
+```powershell
+cd C:\Users\HP\Desktop\trip-planner
+```
 
-## 🚀 Run Locally
+If you are using a different computer, clone the repository first:
 
-### Prerequisites
-
-Make sure you have installed:
-
-- [Node.js](https://nodejs.org/)
-- [Git](https://git-scm.com/)
-- A PostgreSQL database, such as [Neon](https://neon.tech/)
-
-### 1. Clone the repository
-
-```bash
+```powershell
 git clone https://github.com/duashah110/triply-travel-planner.git
 cd triply-travel-planner
 ```
 
-### 2. Install frontend dependencies
+To get the latest GitHub changes in an existing project:
 
-```bash
-npm install
+```powershell
+git pull --rebase origin main
 ```
 
-### 3. Install backend dependencies
+## 2. Install Dependencies
 
-```bash
+Run these commands from the project root:
+
+```powershell
+npm install
 cd server
 npm install
+cd ..
 ```
 
-### 4. Configure environment variables
+## 3. Configure Environment Variables
 
-Create a `.env` file inside the `server/` directory:
+Create a file named `.env` inside the `server` folder:
+
+`server/.env`
+
+Add these variables:
 
 ```env
-DATABASE_URL=your_neon_postgresql_connection_string
-PORT=5000
+DATABASE_URL=YOUR_NEON_POSTGRESQL_CONNECTION_STRING
+SESSION_SECRET=YOUR_PRIVATE_RANDOM_SECRET
 ```
 
-Replace the example database value with your own Neon connection string. **Never commit your real database credentials to GitHub.**
+Replace the placeholders with your own values. Do not use the placeholder text as actual credentials.
 
-Make sure your Neon database contains the required tables: `users`, `trips`, and `activities`.
+Generate a secure session secret with:
 
-### 5. Start the backend
+```powershell
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
-From the `server/` directory, run:
+Keep `.env` private. Never commit database credentials or session secrets to GitHub.
 
-```bash
+## 4. Run the Backend
+
+Open **Terminal 1** in VS Code or PowerShell:
+
+```powershell
+cd C:\Users\HP\Desktop\trip-planner\server
 node server.js
 ```
 
-### 6. Start the frontend
+The backend should display a message similar to:
 
-Open a **second terminal** in the project root directory and run:
+```text
+Triply API running on http://localhost:5000
+Neon database connected successfully
+```
 
-```bash
+Keep this terminal running.
+
+**Note:** The backend currently starts with `node server.js`; `npm run dev` is not configured in the server folder.
+
+## 5. Run the Frontend
+
+Open **Terminal 2** in a separate terminal window:
+
+```powershell
+cd C:\Users\HP\Desktop\trip-planner
 npm run dev
 ```
 
-Open the local URL displayed by Vite in your terminal, usually:
+Open the local URL printed by Vite in your browser. It is commonly `http://localhost:5173` or another available port.
 
-`http://localhost:5173`
+Keep both terminals running while using the local app.
 
-> **Note:** Keep the backend and frontend terminals running while developing locally. If your project uses a different local API configuration, configure the frontend to point to your local backend.
+## 6. Authentication and Database
 
-## 🔌 API Endpoints
+- Create an account or log in through the app.
+- Authenticated trips should be associated with the signed-in user.
+- Test that one user's trips are not visible to another user.
+- The backend requires `DATABASE_URL` and `SESSION_SECRET`.
+- If authentication fails, check the backend terminal and verify the environment variables.
 
-The application uses REST API endpoints to manage travel data.
+## 7. Push Changes to GitHub
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/api/trips` | Retrieve trips |
-| POST | `/api/trips` | Create a trip |
-| GET | `/api/trips/:id` | Retrieve a trip by ID, if implemented |
-| PUT | `/api/trips/:id` | Update a trip, if implemented |
-| DELETE | `/api/trips/:id` | Delete a trip, if implemented |
-| GET/POST | `/api/activities` | Retrieve or create activities, depending on implementation |
+Before starting new work, get the latest changes:
 
-> Endpoints marked “if implemented” should be checked against the current backend before use.
+```powershell
+git pull --rebase origin main
+```
 
-## 🗄️ Database
+After editing and testing your code:
 
-Triply uses PostgreSQL hosted on Neon.
+```powershell
+git status
+git add .
+git commit -m "Describe your changes"
+git push origin main
+```
 
-The database stores information for:
+If Git reports a conflict, stop and resolve it before pushing. Do not use `git push --force` as a shortcut.
 
-- **Users** — User details.
-- **Trips** — Trip titles, destinations, dates, and descriptions.
-- **Activities** — Activities associated with trips, including dates, times, and locations.
+Before running `git add .`, make sure `.env`, passwords, API keys, and other secrets are not being committed.
 
-Trips and activities use relational database constraints to maintain data integrity.
+## 8. Deployment on Vercel
 
-## 🌐 Deployment
+The production website is:
 
-- **Frontend and application:** [Vercel](https://vercel.com/)
-- **Database:** [Neon](https://neon.tech/)
-- **Source code:** [GitHub Repository](https://github.com/duashah110/triply-travel-planner)
+https://triply-travel-planner.vercel.app/
 
-### Deploy your own copy
+The project is connected to GitHub. Pushing changes to the `main` branch can trigger a Vercel deployment.
 
-1. Push the project to GitHub.
-2. Import the repository into Vercel.
-3. Configure the required environment variables in Vercel.
-4. Confirm that your backend API routes are deployed and accessible.
-5. Deploy the project and test trip and activity creation.
+In Vercel, configure the following environment variables for the **Production** environment:
 
-## 🔐 Environment Variables
+- `DATABASE_URL`
+- `SESSION_SECRET`
 
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string from Neon |
-| `PORT` | Backend port for local development |
+Use private, valid values. After changing environment variables, redeploy so the changes take effect.
 
-Keep all secrets in environment variables. Do not publish passwords, API keys, or database connection strings in source code or README files.
+Check that the deployment status is **Ready**, then test signup, login, trip creation, logout, and account-specific trip visibility on the live website.
 
-## 🗺️ Roadmap
+## Troubleshooting
 
-- [ ] User registration and authentication
-- [ ] Edit and delete trips
-- [ ] Improved activity management
-- [ ] Enhanced mobile experience
-- [ ] More travel-planning features
+### `npm run dev` says “Missing script: dev”
 
-## 🤝 Contributing
+For the backend, run:
 
-Contributions, suggestions, and feedback are welcome!
+```powershell
+cd server
+node server.js
+```
 
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Open a pull request.
+For the frontend, run `npm run dev` from the project root.
 
-## 👩‍💻 Author
+### `SESSION_SECRET is missing from environment variables`
 
-**Dua Shah**
+Check that `SESSION_SECRET` exists in `server/.env` for local development and in Vercel's Production environment for the live website.
 
-- GitHub: [@duashah110](https://github.com/duashah110)
+### `Request failed (500)`
+
+Check the backend terminal for local errors or Vercel Runtime Logs for production errors. Verify the environment variables and database connection.
+
+### Neon database connection fails
+
+Check that `DATABASE_URL` is correct, the database is reachable, and the connection settings are valid.
 
 ---
 
-> “Slow down. The view isn't going anywhere, but you are.”
-
-**Made with ❤️ for better travel planning.**
+**Project:** Triply Travel Planner  
+**Repository:** https://github.com/duashah110/triply-travel-planner  
+**Live App:** https://triply-travel-planner.vercel.app/
